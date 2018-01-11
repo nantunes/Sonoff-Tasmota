@@ -247,9 +247,7 @@ void GetTopic_P(char *stopic, byte prefix, char *topic, const char* subtopic)
   }
   fulltopic.replace(F("#"), "");
   fulltopic.replace(F("//"), "/");
-  if (!fulltopic.endsWith("/")) {
-    fulltopic += "/";
-  }
+  // 
   snprintf_P(stopic, TOPSZ, PSTR("%s%s"), fulltopic.c_str(), romram);
 }
 
@@ -340,10 +338,10 @@ void SetLedPower(uint8_t state)
 
 void MqttSubscribe(char *topic)
 {
-  snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_SUBSCRIBE_TO " %s"), topic);
-  AddLog(LOG_LEVEL_DEBUG);
-  MqttClient.subscribe(topic);
-  MqttClient.loop();  // Solve LmacRxBlk:1 messages
+  // snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_SUBSCRIBE_TO " %s"), topic);
+  // AddLog(LOG_LEVEL_DEBUG);
+  // MqttClient.subscribe(topic);
+  // MqttClient.loop();  // Solve LmacRxBlk:1 messages
 }
 
 void MqttPublishDirect(const char* topic, boolean retained)
@@ -449,17 +447,17 @@ void MqttConnected()
 
     // Satisfy iobroker (#299)
     mqtt_data[0] = '\0';
-    MqttPublishPrefixTopic_P(0, S_RSLT_POWER);
+    // MqttPublishPrefixTopic_P(0, S_RSLT_POWER);
 
     GetTopic_P(stopic, 0, Settings.mqtt_topic, PSTR("#"));
-    MqttSubscribe(stopic);
+    // MqttSubscribe(stopic);
     if (strstr(Settings.mqtt_fulltopic, MQTT_TOKEN_TOPIC) != NULL) {
       GetTopic_P(stopic, 0, Settings.mqtt_grptopic, PSTR("#"));
-      MqttSubscribe(stopic);
+      // MqttSubscribe(stopic);
       fallback_topic_flag = 1;
       GetTopic_P(stopic, 0, mqtt_client, PSTR("#"));
       fallback_topic_flag = 0;
-      MqttSubscribe(stopic);
+      // MqttSubscribe(stopic);
     }
 #ifdef USE_DOMOTICZ
     DomoticzMqttSubscribe();
@@ -469,17 +467,17 @@ void MqttConnected()
   if (mqtt_connection_flag) {
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_CMND_MODULE "\":\"%s\",\"" D_VERSION "\":\"" VERSION_STRING "\",\"" D_FALLBACKTOPIC "\":\"%s\",\"" D_CMND_GROUPTOPIC "\":\"%s\"}"),
       my_module.name, mqtt_client, Settings.mqtt_grptopic);
-    MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "1"));
+    // MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "1"));
 #ifdef USE_WEBSERVER
     if (Settings.webserver) {
       snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_WEBSERVER_MODE "\":\"%s\",\"" D_CMND_HOSTNAME "\":\"%s\",\"" D_CMND_IPADDRESS "\":\"%s\"}"),
         (2 == Settings.webserver) ? D_ADMIN : D_USER, my_hostname, WiFi.localIP().toString().c_str());
-      MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "2"));
+      // MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "2"));
     }
 #endif  // USE_WEBSERVER
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR("{\"" D_RESTARTREASON "\":\"%s\"}"),
       (GetResetReason() == "Exception") ? ESP.getResetInfo().c_str() : GetResetReason().c_str());
-    MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "3"));
+    // MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_INFO "3"));
     if (Settings.tele_period) {
       tele_period = Settings.tele_period -9;
     }
@@ -555,7 +553,7 @@ void MqttReconnect()
     AddLog_P(LOG_LEVEL_INFO, S_LOG_MQTT, PSTR(D_CONNECTED));
     mqtt_retry_counter = 0;
     snprintf_P(mqtt_data, sizeof(mqtt_data), PSTR(D_ONLINE));
-    MqttPublish(stopic, true);
+    // MqttPublish(stopic, true);
     MqttConnected();
   } else {
     snprintf_P(log_data, sizeof(log_data), PSTR(D_LOG_MQTT D_CONNECT_FAILED_TO " %s:%d, rc %d. " D_RETRY_IN " %d " D_UNIT_SECOND),
@@ -1869,24 +1867,24 @@ void PerformEverySecond()
     }
   }
 
-  if (Settings.tele_period) {
-    tele_period++;
-    if (tele_period == Settings.tele_period -1) {
-      XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
-    }
-    if (tele_period >= Settings.tele_period) {
-      tele_period = 0;
+  // if (Settings.tele_period) {
+  //   tele_period++;
+  //   if (tele_period == Settings.tele_period -1) {
+  //     XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
+  //   }
+  //   if (tele_period >= Settings.tele_period) {
+  //     tele_period = 0;
 
-      mqtt_data[0] = '\0';
-      MqttShowState();
-      MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_STATE));
+  //     mqtt_data[0] = '\0';
+  //     MqttShowState();
+  //     // MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_STATE));
 
-      mqtt_data[0] = '\0';
-      if (MqttShowSensor()) {
-        MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
-      }
-    }
-  }
+  //     mqtt_data[0] = '\0';
+  //     if (MqttShowSensor()) {
+  //       MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+  //     }
+  //   }
+  // }
 
   XsnsCall(FUNC_EVERY_SECOND);
 
@@ -2142,6 +2140,25 @@ void StateLoop()
 \*-------------------------------------------------------------------------------------------*/
 
   if (!(state % (STATES/10))) {
+
+    if (Settings.tele_period) {
+      tele_period++;
+      if (tele_period == Settings.tele_period -1) {
+        XsnsCall(FUNC_PREP_BEFORE_TELEPERIOD);
+      }
+      if (tele_period >= Settings.tele_period) {
+        tele_period = 0;
+
+        mqtt_data[0] = '\0';
+        MqttShowState();
+        // MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_STATE));
+
+        mqtt_data[0] = '\0';
+        if (MqttShowSensor()) {
+          MqttPublishPrefixTopic_P(2, PSTR(D_RSLT_SENSOR), Settings.flag.mqtt_sensor_retain);
+        }
+      }
+    }
 
     if (mqtt_cmnd_publish) {
       mqtt_cmnd_publish--;  // Clean up
